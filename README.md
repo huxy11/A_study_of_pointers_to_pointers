@@ -1,14 +1,7 @@
 # C语言细节&技巧
 	
 ## 指向指针的指针
-	Linux大神的一段话：
-	Hmm. You do realize that I don't get all that close to the code any more? I spend my time not coding, but reading emails, and merging stuff others wrote. And when I *do* get involved with the code, it's not because it's "cool", it's because it broke, and you'll find me cursing the people who wrote it, and questioning their parentage and that of their pets.
-
-	So I very seldom get involved in the really cool code any more, I'm afraid. I end up being involved in the "Holy sh*t, how did we ever merge that cr*p" code. Perhaps not as much as Greg (who has to deal with the staging tree), but then Greg is "special".
-
-	That said, we do have lots of pretty cool code in the kernel. I'm particularly proud of our filename lookup cache, but hey, I'm biased. That code is *not* for the weak of heart, though, because the whole lockless lookup (with fallbacks to more traditional locked code) is hairy and subtle, and mortals are not supposed to really look at it. It's been tweaked to some pretty extreme degrees, because it ends up being involved any time you look up a filename. I still remember how happy I was to merge the new lockless RCU filename lookup code last year.
-
-	   At the opposite end of the spectrum, I actually wish more people understood the really core low-level kind of coding. Not big, complex stuff like the lockless name lookup, but simply good use of pointers-to-pointers etc. For example, I've seen too many people who delete a singly-linked list entry by keeping track of the "prev" entry, and then to delete the entry, doing something like
+	Linux大神说这样用C写链表删除的都不懂指针：
 
 ```c
 	if (prev)
@@ -16,11 +9,36 @@
 	else
 		list_head = entry->next;
 ```
-	and whenever I see code like that, I just go "This person doesn't understand pointers". And it's sadly quite common.
 
-	People who understand pointers just use a "pointer to the entry pointer", and initialize that with the address of the list_head. And then as they traverse the list, they can remove the entry without using any conditionals, by just doing a "*pp = entry->next".
+得这么用
 
-	So there's lots of pride in doing the small details right. It may not be big and important code, but I do like seeing code where people really thought about the details, and clearly also were thinking about the compiler being able to generate efficient code (rather than hoping that the compiler is so smart that it can make efficient code *despite* the state of the original source code).
+```c
+	*pp = entry->next"
+```
+
+	于是我就趟枪了，不过乍一看的确很简洁优雅,还不太容易理解，就着手试着分析一下思路了。
 	
-	初读时觉得真是神奇，就开始写代码理解思路了。
+	普通人写的链表之所以有一个的判断，是因为当删除链表头时情况特殊。于是一个简单的统一化思路就是在表头前加一个哨兵结点。但哨兵节点其他的空间就有点浪费了，又于是，我们普通人会以尽量利用这些空间存一点信息（如链表长度等）这样聊剩余无的手段改进一下。
+
+```c
+	struct node *pre;
+	for (pre = sentinel; pre->next;)
+		if (condition)
+			prev->next = pre->next->next;
+		else
+			pre = pre->next;
+```
+	
+	而Linus的方法，则是再进一步，不用一个节点当sentinel,而是用链表的head指针。
+
+```c
+	struct node **cur;
+	for (*cur = &head; **cur;) {
+		if (condition) 
+			*cur = (*cur)->next;//remove
+		else
+			cur = &(*cur)->next;
+	}
+```
+	分析下来，其实并不难理解，也没有高深的地方。不过倒挺有启发性的。
 

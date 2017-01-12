@@ -1,6 +1,10 @@
 /*
  ============================================================================
  Name        : LinkList.c
+ Author      : 
+ Version     :
+ Copyright   : Your copyright notice
+ Description : Hello World in C, Ansi-style
  ============================================================================
  */
 
@@ -50,9 +54,11 @@ void sentinel_rm(int flag)
 	sentinel = malloc(sizeof(struct list_t));
 	sentinel->next = head;
 	node cur, pre = sentinel;
-	for (cur = sentinel->next; cur; cur = cur->next, pre = pre->next)
-		if (cur->value == flag)
-			pre->next = cur->next;
+	for (pre = sentinel; pre->next;)
+		if (pre->next->value == flag)
+			pre->next = pre->next->next;
+		else
+			pre = pre->next;
 }
 
 void p2p_rm(int flag)
@@ -80,7 +86,7 @@ void print_result()
 			printf("sentinel:%d\n", cur->value);
 		return;
 	}
-	for (cur =head; cur; cur = cur->next)
+	for (cur = head; cur; cur = cur->next)
 		printf("nomal:%d\n", cur->value);
 }
 
@@ -91,9 +97,9 @@ int main(void)
 	/* Base */
 //	base_rm(55);
 	/* Use sentinel*/
-//	sentinel_rm(0);
+	sentinel_rm(4);
 	/* Pointers to pointers */
-	p2p_rm(0);
+//	p2p_rm(0);
 	/* Print the result */
 	print_result();
 	return 0;
