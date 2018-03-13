@@ -1,6 +1,6 @@
 # C语言细节&技巧
 ## 指向指针的指针
-Linux大神说这样用C写链表删除的都不懂指针：
+Linus大神说这样用C写链表删除的都不懂指针：
 ```
 	if (prev)
 		prev->next = entry->next;
